@@ -8,12 +8,9 @@ import json
 import requests
 import faiss
 import numpy as np
-
-import pickle
 import streamlit as st
 from moviepy.editor import *
 import tempfile
-import random
 import time
 from dotenv import load_dotenv
 
@@ -178,10 +175,7 @@ if generate_button and all_inputs_provided:
             clips = []
             for image_file in selected_files:
                 # 一時ファイルを作成し、アップロードされたファイルの内容を書き込む
-                # image_file = "C:/Users/sobata/Downloads/" + file_pass
                 temp_image_path = os.path.join(tmpdirname, image_file)
-                # with open(temp_image_path, "wb") as f:
-                #     f.write(image_file.read())
                 # ImageClip を作成
                 clip = ImageClip(temp_image_path, duration=3)
                 clips.append(clip)
@@ -207,17 +201,6 @@ if generate_button and all_inputs_provided:
                 final_clip.write_videofile(temp_video_file, fps=24)
                 time.sleep(2)
             st.success('Done!')
-
-
-            # # 画像クリップを結合
-            # final_clip = concatenate_videoclips(clips, method="compose")
-
-            # with st.spinner('Wait for it...'):
-            #     # 動画を一時ファイルに書き出す
-            #     temp_video_file = os.path.join(tmpdirname, 'temp_video.mp4')
-            #     final_clip.write_videofile(temp_video_file, fps=24)
-            #     time.sleep(2)
-            # st.success('Done!')
 
             st.video(temp_video_file)
 
