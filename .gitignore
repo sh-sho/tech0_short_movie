@@ -161,5 +161,4 @@ cython_debug/
 
 # My costom
 data/
-*.mp3
 *.mp4
