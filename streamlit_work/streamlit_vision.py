@@ -15,14 +15,17 @@ from moviepy.editor import *
 import tempfile
 import random
 import time
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # 処理時間計測
 start = time.time()
 
 
 # set env
-os.environ["VISION_ENDPOINT"] = "https://vision-movie.cognitiveservices.azure.com/"
-os.environ["VISION_API_KEY"] = "6b76e18bf1ea4948a3d7b302df8ea32c"
+VISION_ENDPOINT = os.getenv('VISION_ENDPOINT')
+VISION_API_KEY = os.getenv('VISION_API_KEY')
 
 # 音楽設定の選択肢
 music_options = {
@@ -44,15 +47,19 @@ images = []
 labels = []
 vectors = []
 image_file_pass = []
-num = 3  # the number of images
+num = 5  # the number of images
 endpoint = os.getenv("VISION_ENDPOINT") + "/computervision/retrieval:vectorizeImage?api-version=2023-02-01-preview&modelVersion=latest"
 headers = {
     "Content-Type": "application/octet-stream",  # リクエストボディは画像のバイナリデータ
     "Ocp-Apim-Subscription-Key": os.getenv("VISION_API_KEY")
 }
 
+
 def embed_images(images):
+    i = 0
     for idx, image in enumerate(images):
+        i += 1
+        embed_cell_start = time.time()
         with open(image, mode="rb") as f:
             image_bin = f.read()
         # Vectorize Image API を使って画像をベクトル化
@@ -60,6 +67,10 @@ def embed_images(images):
         # print(response.json())
         image_vec = np.array(response.json()["vector"], dtype="float32").reshape(1, -1)
         vectors.append(image_vec)
+        embed_cell_end = time.time()
+        embed_cell_time = embed_cell_end - embed_cell_start
+        print('embed image No.%s' %i)
+        print('embed cell time %s' %embed_cell_time)
     return vectors
 
 
@@ -74,7 +85,7 @@ def create_index(vectors):
 
 
 # search images
-def search_faiss_by_text(query_text, n=3):
+def search_faiss_by_text(query_text, n=2):
     endpoint = os.getenv("VISION_ENDPOINT") + "/computervision/retrieval:vectorizeText?api-version=2023-02-01-preview&modelVersion=latest"
     headers = {
         "Content-Type": "application/json",
@@ -107,15 +118,15 @@ def down_load_file(uploaded_files):
                     key=f"download_button_{i+1}",
                     file_name=file.name
                 )
-    
-    
+
+
 # タイトルを設定
 st.title('ショートムービー再生アプリ')
 # サイドバーのユーザー入力
 # 一旦画像ファイル
 uploaded_files = st.sidebar.file_uploader("動画ファイルをアップロードしてください", accept_multiple_files=True,type=["jpg","png","mp4", "mov"])
 # 変数
-selected_files_range = min([len(uploaded_files), 20])
+selected_files_range = min([len(uploaded_files), 3])
 down_load_file(uploaded_files)
 
 selected_music = st.sidebar.selectbox("音楽設定を選択してください", list(music_options.keys()))
@@ -128,9 +139,7 @@ all_inputs_provided = uploaded_files is not None and selected_music and selected
 # 生成ボタン
 generate_button = st.sidebar.button('動画を生成', disabled=not all_inputs_provided)
 
-# img = mpimg.imread(images[I[0][0]])
-# st.image(img)
-n = 6
+n=6
 
 # 動画と音楽を結合して再生
 if generate_button and all_inputs_provided:
